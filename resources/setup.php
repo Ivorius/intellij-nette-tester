@@ -25,21 +25,29 @@ final class TeamCityOutputHandler implements OutputHandler
     }
 
 
-    public function begin()
+    public function begin(): void
     {
          // \fwrite($this->file, $this->message('testCount', array('count' => 0)));
     }
 
-
-    public function result($testName, $result, $message)
+    function prepare(\Tester\Runner\Test $test): void
     {
+        // TODO: Implement prepare() method.
+    }
+
+    function finish(\Tester\Runner\Test $test): void
+    {
+        $testName = $test->title ?: $test->getFile();
+        $result = $test->getResult();
+        $message = $test->message;
+
         $flowId = \md5($testName);
         \fwrite($this->file, $this->message('testStarted', array('name' => $testName, 'flowId' => $flowId)));
 
-        if ($result === 2) { // Runner::SKIPPED, Test::SKIPPED
+        if ($result === \Tester\Runner\Test::SKIPPED) { // Runner::SKIPPED, Test::SKIPPED
             \fwrite($this->file, $this->message('testIgnored', array('name' => $testName, 'flowId' => $flowId, 'message' => 'Test skipped', 'details' => $message)));
 
-        } elseif ($result === 3) { // Runner::FAILED, Test::FAILED
+        } elseif ($result === \Tester\Runner\Test::FAILED) { // Runner::FAILED, Test::FAILED
             $extraArguments = array();
             if (\preg_match("/^diff \"(.*)\" \"(.*)\"$/m", $message, $matches)) { // Windows build
                 $expectedFile = \str_replace('""', '"', $matches[1]);
@@ -71,7 +79,7 @@ final class TeamCityOutputHandler implements OutputHandler
     }
 
 
-    public function end()
+    public function end(): void
     {
     }
 
